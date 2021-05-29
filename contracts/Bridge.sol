@@ -15,31 +15,23 @@ contract Bridge {
     using Address for address payable;
     using SafeMath for uint256;
 
-    event Lock(address payee, address token, uint256 amount);
-    event Claim(address payee, address token, uint256 amount);
+    event Lock(address indexed payee, uint256 amount);
+    event Mint(address indexed payee, uint256 amount);
 
-    struct UserTokens {
-        address token;
-        mapping(address => uint256) locked;
+    // new mappings
+    mapping(address => uint256) public locked;
+
+    IERC20 public UND;
+
+    constructor(address _undAddress) {
+        UND = IERC20(_undAddress);
     }
 
-    mapping(address => UserTokens[]) public userTokens;
-
-    function getLockedBalance(address _token) public view returns (uint256) {
-        return userTokens[msg.sender][_token].locked;
-    }
-
-    function deposit(address _token, uint256 _amt) external {
-        // update balance of specified token
-        u = UserTokens({token: _token});
-        u.locked[msg.sender] = u.locked[msg.sender].add(_amt);
-
-        userTokens[msg.sender].push(u);
-
-        IERC20 token = IERC20(_token);
-        token.transferFrom(msg.sender, address(this), _amt);
-
-        emit Lock(msg.sender, _token, _amt);
+    // real code
+    function deposit(uint256 _amt) external {
+        locked[msg.sender] = locked[msg.sender].add(_amt);
+        UND.transferFrom(msg.sender, address(this), _amt);
+        emit Lock(msg.sender, _amt);
     }
 
     function claim(uint256 _amt) external {
